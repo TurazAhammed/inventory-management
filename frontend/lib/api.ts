@@ -9,7 +9,7 @@ const envUrl = typeof process !== 'undefined' && process.env && process.env.NEXT
   : '';
 
 const DEFAULT_HOST = Platform.select({
-  android: 'http://192.168.0.100:3000',
+  android: 'http://192.168.0.104:3000',
   default: 'http://localhost:3000',
 });
 
@@ -36,6 +36,7 @@ export async function getInventoryList(): Promise<Inventory[]> {
 export interface Sale {
   id?: number;
   item_id: number;
+  item_name?: string;
   quantity_sold: number;
   sell_price: number;
   total_sell?: number;

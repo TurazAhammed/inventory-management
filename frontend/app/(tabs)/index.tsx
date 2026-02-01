@@ -5,6 +5,15 @@ import { useTranslation } from 'react-i18next';
 import '@/i18n';
 import { getDailySummary, getWeeklySummary, getMonthlySummary, getYearlySummary, getInventoryList, getSalesList, type SummaryData } from '@/lib/api';
 
+// Load Tailwind theme values for consistent UI
+// @ts-ignore - importing JS config into TSX for runtime theme use
+const tailwindConfig = require('../../tailwind.config.js');
+const theme = tailwindConfig?.theme?.extend ?? {};
+const themeColors = theme.colors || {};
+const themeRadii = theme.borderRadius || {};
+const pxToNum = (v: any) => (typeof v === 'string' && v.endsWith('px')) ? parseInt(v, 10) : (typeof v === 'number' ? v : undefined);
+
+
 type PeriodKey = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'lifetime';
 
 const initialSummary: SummaryData = {
@@ -108,7 +117,7 @@ const Home = () => {
 
   return (
     <SafeAreaView style={[styles.safeArea, androidPadding]}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps="handled">
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={styles.header}>{t('summary.header')}</Text>
         <View style={{ flexDirection: 'row' }}>
@@ -137,22 +146,22 @@ const Home = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
-  container: { padding: 16, backgroundColor: '#FFFFFF' },
-  header: { fontSize: 22, fontWeight: '700', marginBottom: 12, color: '#1F2937' },
-  loading: { color: '#6B7280' },
+  safeArea: { flex: 1, backgroundColor: (themeColors.surface || '#FFFFFF') },
+  container: { backgroundColor: (themeColors.surface || '#FFFFFF') },
+  header: { fontSize: 22, fontWeight: '700', marginBottom: 12, color: ((themeColors.primary && (themeColors.primary.DEFAULT || themeColors.primary)) || '#1F2937') },
+  loading: { color: (themeColors.muted || '#6B7280') },
   card: {
     padding: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
+    borderColor: ((themeColors.neutral && (themeColors.neutral['100'] || themeColors.neutral[100])) || '#E5E7EB'),
+    borderRadius: (pxToNum(themeRadii.DEFAULT) || 8),
     marginBottom: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: (themeColors.surface || '#FFFFFF'),
   },
-  cardTitle: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
-  cardLine: { fontSize: 14, color: '#1F2937', marginTop: 4 },
-  profitPositive: { color: '#10B981' },
-  profitNegative: { color: '#EF4444' },
+  cardTitle: { fontSize: 16, fontWeight: '600', marginBottom: 8, color: ((themeColors.neutral && (themeColors.neutral['900'] || themeColors.neutral[900])) || '#1F2937') },
+  cardLine: { fontSize: 14, color: ((themeColors.neutral && (themeColors.neutral['900'] || themeColors.neutral[900])) || '#1F2937'), marginTop: 4 },
+  profitPositive: { color: ((themeColors.accent && (themeColors.accent.DEFAULT || themeColors.accent)) || '#10B981') },
+  profitNegative: { color: (themeColors.error || '#EF4444') },
 });
 
 export default Home;

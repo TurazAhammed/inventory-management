@@ -9,7 +9,19 @@ const router = express.Router();
 router.get('/', async (req, res) => {
 	try {
 		const [rows] = await pool.query(
-			'SELECT id, item_id, quantity_sold, sell_price, total_sell, sold_at FROM sales ORDER BY id DESC'
+			`
+			SELECT 
+				s.id,
+				s.item_id,
+				i.name AS item_name,
+				s.quantity_sold,
+				s.sell_price,
+				s.total_sell,
+				s.sold_at
+			FROM sales s
+			JOIN inventory i ON s.item_id = i.id
+			ORDER BY s.id DESC
+		`
 		);
 		res.json(rows);
 	} catch (err) {

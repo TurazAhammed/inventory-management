@@ -1,6 +1,6 @@
 // React + React Native imports
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView, Platform, StatusBar } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView, Platform, StatusBar, TextInput } from 'react-native';
 
 // i18n for translations
 import { useTranslation } from 'react-i18next';
@@ -34,6 +34,7 @@ const Sales = () => {
 
   // `error` stores any fetch error message for simple display
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch sales on mount and subscribe to realtime additions
   useEffect(() => {
@@ -53,6 +54,13 @@ const Sales = () => {
     return () => { mounted = false; if (typeof unsub === 'function') unsub(); };
   }, []);
 
+  // derive filtered items
+  const filteredItems = items ? items.filter(s => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (s.item_name?.toLowerCase().includes(q)) || (s.item_id?.toString().includes(q)) || (s.id?.toString().includes(q));
+  }) : null;
+
   // Add padding on Android to account for the status bar height
   const androidPadding = Platform.OS === 'android' ? { paddingTop: StatusBar.currentHeight ?? 0 } : {};
 
@@ -65,6 +73,13 @@ const Sales = () => {
       >
         {/* Screen title */}
         <Text style={styles.title}>{t('sales.title')}</Text>
+        <TextInput
+          style={styles.input}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={t('common.search') || 'Search...'}
+          returnKeyType="search"
+        />
 
         {/* Display fetch error if present */}
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -72,14 +87,12 @@ const Sales = () => {
         {/* Loading state: `items === null` shows spinner */}
         {items === null ? (
           <ActivityIndicator size="large" color={((themeColors.secondary && (themeColors.secondary.DEFAULT || themeColors.secondary)) || '#E0244E')} style={{ marginTop: 20 }} />
-
-        /* Empty state: no sales */
         ) : items.length === 0 ? (
           <Text style={styles.noItems}>{t('sales.noItems')}</Text>
-
-        /* List state: render each sale as a card */
+        ) : (filteredItems && filteredItems.length === 0) ? (
+          <Text style={styles.noItems}>{t('common.noResults') || 'No results'}</Text>
         ) : (
-          items.map((s, index) => {
+          (filteredItems ?? []).map((s, index) => {
             // Compute total: prefer explicit `total_sell`, otherwise multiply qty * price
             const rawTotal = s.total_sell ?? (s.quantity_sold && s.sell_price ? (Number(s.quantity_sold) * Number(s.sell_price)) : undefined);
             const totalNum = typeof rawTotal === 'number' ? rawTotal : (rawTotal ? Number(rawTotal) : NaN);
@@ -143,6 +156,17 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, fontWeight: '500', color: ((themeColors.neutral && (themeColors.neutral['900'] || themeColors.neutral[900])) || '#1F2937'), fontFamily: defaultFont },
   totalText: { fontSize: 14, fontWeight: '600', color: (themeColors.success || '#34C759'), marginTop: 8 },
   small: { fontSize: 12, color: (themeColors.muted || '#6B7280'), marginTop: 8 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: (pxToNum(themeRadii.DEFAULT) || 8),
+    padding: 10,
+    fontSize: 14,
+    backgroundColor: '#F9FAFB',
+    color: '#1F2937',
+    marginTop: 8,
+    fontFamily: defaultFont,
+  },
   fab: {
     position: 'absolute' as const,
     bottom: 20,

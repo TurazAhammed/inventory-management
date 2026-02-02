@@ -24,6 +24,7 @@ export default function Inventory() {
   const [editBuyPrice, setEditBuyPrice] = useState('');
   const [editSellPrice, setEditSellPrice] = useState('');
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const openEditModal = (item: Inventory) => {
     setEditingItem(item);
@@ -101,9 +102,22 @@ export default function Inventory() {
 
   const androidPadding = Platform.OS === 'android' ? { paddingTop: StatusBar.currentHeight ?? 0 } : {};
 
+  const filteredItems = items ? items.filter(item => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (item.name?.toLowerCase().includes(q)) || (item.id?.toString().includes(q));
+  }) : null;
+
   return (
     <SafeAreaView style={[styles.safeArea, androidPadding]}>
       <Text style={styles.header}>{t('inventory.title')}</Text>
+      <TextInput
+        style={styles.input}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholder={t('common.search') || 'Search...'}
+        returnKeyType="search"
+      />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -111,10 +125,12 @@ export default function Inventory() {
         <ActivityIndicator size="large" color={((themeColors.secondary && (themeColors.secondary.DEFAULT || themeColors.secondary)) || '#E0244E')} style={{ marginTop: 20 }} />
       ) : items.length === 0 ? (
         <Text style={styles.noItems}>{t('inventory.noItems')}</Text>
+      ) : (filteredItems && filteredItems.length === 0) ? (
+        <Text style={styles.noItems}>{t('common.noResults') || 'No results'}</Text>
       ) : (
         <>
           <FlatList
-            data={items}
+            data={filteredItems ?? []}
             style={styles.list}
             contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
             keyExtractor={(item: Inventory) => (item.id?.toString() ?? Math.random().toString())}

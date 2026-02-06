@@ -1,9 +1,11 @@
 const express = require('express');
 const pool = require('../db');
 const router = express.Router();
+const auth = require("../middleware/auth");
+const role = require("../middleware/role");
 
 // List inventory with full fields including is_active
-router.get('/', async (req, res) => {
+router.get('/',auth,role(["inventory_admin", "super_admin"]), async (req, res) => {
   try {
     const [rows] = await pool.query(
       'SELECT id, name, buy_price, sell_price, quantity, created_at, is_active FROM inventory ORDER BY id DESC'
@@ -16,7 +18,7 @@ router.get('/', async (req, res) => {
 });
 
 // Add an item: { name, buy_price, sell_price, quantity, is_active(optional) }
-router.post('/', async (req, res) => {
+router.post('/',auth,role(["inventory_admin", "super_admin"]), async (req, res) => {
   const { name, buy_price, sell_price, quantity, is_active } = req.body;
   if (!name || quantity == null) return res.status(400).json({ error: 'Missing fields' });
   try {
@@ -37,7 +39,7 @@ router.post('/', async (req, res) => {
 });
 
 // Soft-delete an item by id (set is_active = 0)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id',auth,role(["inventory_admin", "super_admin"]), async (req, res) => {
   const { id } = req.params;
   try {
     const [result] = await pool.query('UPDATE inventory SET is_active = 0 WHERE id = ? AND is_active = 1', [id]);
@@ -50,7 +52,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Update an item by id
-router.put('/:id', async (req, res) => {
+router.put('/:id',auth,role(["inventory_admin", "super_admin"]), async (req, res) => {
   const { id } = req.params;
   const { name, buy_price, sell_price, quantity, is_active } = req.body;
   if (!name && buy_price == null && sell_price == null && quantity == null && is_active == null) {
@@ -80,3 +82,6 @@ router.put('/:id', async (req, res) => {
 });
 
 module.exports = router;
+
+
+

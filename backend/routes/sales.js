@@ -1,12 +1,14 @@
 const express = require('express');
 const pool = require('../db');
 const router = express.Router();
+const auth = require("../middleware/auth");
+const role = require("../middleware/role");
+
+// Protected route to add a sale
 
 
-
-
-// Get all sales (single-item sales)
-router.get('/', async (req, res) => {
+	// Get all sales (single-item sales)
+router.get('/', auth, role(["sales_admin", "super_admin"]), async (req, res) => {
 	try {
 		const [rows] = await pool.query(
 			`
@@ -31,7 +33,7 @@ router.get('/', async (req, res) => {
 });
 
 // Create a single-item sale: { item_id, quantity_sold, sell_price }
-router.post('/', async (req, res) => {
+router.post('/', auth, role(["sales_admin", "super_admin"]), async (req, res) => {
 	const { item_id, quantity_sold, sell_price } = req.body;
 	if (!item_id || !quantity_sold || !sell_price) return res.status(400).json({ error: 'Missing fields' });
 
@@ -64,7 +66,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update a sale: adjust inventory accordingly if quantity/item changes
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, role(["sales_admin", "super_admin"]), async (req, res) => {
 	const { id } = req.params;
 	const { item_id: new_item_id, quantity_sold: new_qty, sell_price: new_price } = req.body;
 
@@ -133,7 +135,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete a sale and restore inventory quantity
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, role(["sales_admin", "super_admin"]), async (req, res) => {
 	const { id } = req.params;
 	const conn = await pool.getConnection();
 	try {
@@ -169,4 +171,8 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
+
+
+
+
 

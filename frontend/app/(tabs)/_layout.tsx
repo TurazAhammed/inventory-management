@@ -1,49 +1,40 @@
-import { Stack, Tabs, useRouter } from "expo-router";
-import '../globals.css';
-import React from "react";
-import Icon from '@expo/vector-icons/FontAwesome';
+import { Tabs } from 'expo-router';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useAuth } from '@/lib/authContext';
 
-const _layout = () => {
-  const router = useRouter();
+const TabsLayout = () => {
+  const { role, isLoading } = useAuth();
   const { t } = useTranslation();
 
+  if (isLoading) return null;
+
+  if (role === 'inventory_admin') {
+    return (
+      <Tabs key={role}>
+        <Tabs.Screen name="inventory" options={{ headerShown: false, tabBarLabel: t('inventory.title'), tabBarIcon: ({ color, size }) => (<FontAwesome6 name="boxes-stacked" size={size} color={color} />) }} />
+      </Tabs>
+    );
+  }
+
+  if (role === 'sales_admin') {
+    return (
+      <Tabs key={role}>
+        <Tabs.Screen name="sales" options={{ headerShown: false, tabBarLabel: t('sales.title'), tabBarIcon: ({ color, size }) => (<MaterialIcons name="point-of-sale" size={size} color={color} />) }} />
+      </Tabs>
+    );
+  }
+
   return (
-    <Tabs>
-      <Tabs.Screen
-        name="index"
-        options={{
-          tabBarLabel: t('common.home'),
-          headerShown: false,
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Icon name="home" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="inventory"
-        options={{
-          tabBarLabel: t('inventory.title'),
-          headerShown: false,
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <FontAwesome6 name="boxes-stacked" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="sales"
-        options={{
-          tabBarLabel: t('sales.title'),
-          headerShown: false,
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <MaterialIcons name="point-of-sale" color={color} size={size} />
-          ),
-        }}
-      />
+    <Tabs key={role}>
+      <Tabs.Screen name="index" options={{ headerShown: false, tabBarLabel: t('common.home'), tabBarIcon: ({ color, size }) => (<FontAwesome name="home" size={size} color={color} />) }} />
+      <Tabs.Screen name="inventory" options={{ headerShown: false, tabBarLabel: t('inventory.title'), tabBarIcon: ({ color, size }) => (<FontAwesome6 name="boxes-stacked" size={size} color={color} />) }} />
+      <Tabs.Screen name="sales" options={{ headerShown: false, tabBarLabel: t('sales.title'), tabBarIcon: ({ color, size }) => (<MaterialIcons name="point-of-sale" size={size} color={color} />) }} />
     </Tabs>
   );
 };
 
-export default _layout;
+export default TabsLayout;

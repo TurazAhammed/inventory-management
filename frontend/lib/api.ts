@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import axios from 'axios';
 
 // Runtime API URL selection:
 // - If `NEXT_PUBLIC_API_URL` is provided (via your env/build), use it.
@@ -15,6 +16,23 @@ const DEFAULT_HOST = Platform.select({
 
 export const API_URL = envUrl || DEFAULT_HOST;
 
+// Configure axios instance for API calls
+export const apiClient = axios.create({
+  baseURL: API_URL,
+});
+
+// Add request interceptor to include auth token
+apiClient.interceptors.request.use(
+  config => {
+    const token = axios.defaults.headers.common['Authorization'];
+    if (token) {
+      config.headers.Authorization = token;
+    }
+    return config;
+  },
+  error => Promise.reject(error)
+);
+
 
 export interface Inventory {
   id?: number;
@@ -27,10 +45,8 @@ export interface Inventory {
 }
 
 export async function getInventoryList(): Promise<Inventory[]> {
-  const res = await fetch(`${API_URL}/api/inventory`);
-  if (!res.ok) throw new Error('Failed to fetch Inventory from API');
-  const data: Inventory[] = await res.json();
-  return data;
+  const res = await apiClient.get<Inventory[]>('/api/inventory');
+  return res.data;
 }
 
 export interface Sale {
@@ -44,50 +60,27 @@ export interface Sale {
 }
 
 export async function getSalesList(): Promise<Sale[]> {
-  const res = await fetch(`${API_URL}/api/sales`);
-  if (!res.ok) throw new Error('Failed to fetch sales from API');
-  const data: Sale[] = await res.json();
-  return data;
+  const res = await apiClient.get<Sale[]>('/api/sales');
+  return res.data;
 }
 
 export async function addInventoryItem(item: Inventory): Promise<Inventory> {
-  const res = await fetch(`${API_URL}/api/inventory`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(item),
-  });
-  if (!res.ok) throw new Error('Failed to add inventory item');
-  const data: Inventory = await res.json();
-  return data;
+  const res = await apiClient.post<Inventory>('/api/inventory', item);
+  return res.data;
 }
 
 export async function updateInventoryItem(id: number, item: Inventory): Promise<Inventory> {
-  const res = await fetch(`${API_URL}/api/inventory/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(item),
-  });
-  if (!res.ok) throw new Error('Failed to update inventory item');
-  const data: Inventory = await res.json();
-  return data;
+  const res = await apiClient.put<Inventory>(`/api/inventory/${id}`, item);
+  return res.data;
 }
 
 export async function deleteInventoryItem(id: number): Promise<void> {
-  const res = await fetch(`${API_URL}/api/inventory/${id}`, {
-    method: 'DELETE',
-  });
-  if (!res.ok) throw new Error('Failed to delete inventory item');
+  await apiClient.delete(`/api/inventory/${id}`);
 }
 
 export async function addSale(sale: Sale): Promise<Sale> {
-  const res = await fetch(`${API_URL}/api/sales`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(sale),
-  });
-  if (!res.ok) throw new Error('Failed to add sale');
-  const data: Sale = await res.json();
-  return data;
+  const res = await apiClient.post<Sale>('/api/sales', sale);
+  return res.data;
 }
 
 export interface SummaryData {
@@ -106,31 +99,23 @@ export interface SummaryData {
 }
 
 export async function getDailySummary(): Promise<SummaryData> {
-  const res = await fetch(`${API_URL}/api/summary/daily`);
-  if (!res.ok) throw new Error('Failed to fetch daily summary');
-  const data: SummaryData = await res.json();
-  return data;
+  const res = await apiClient.get<SummaryData>('/api/summary/daily');
+  return res.data;
 }
 
 export async function getWeeklySummary(): Promise<SummaryData> {
-  const res = await fetch(`${API_URL}/api/summary/weekly`);
-  if (!res.ok) throw new Error('Failed to fetch weekly summary');
-  const data: SummaryData = await res.json();
-  return data;
+  const res = await apiClient.get<SummaryData>('/api/summary/weekly');
+  return res.data;
 }
 
 export async function getMonthlySummary(): Promise<SummaryData> {
-  const res = await fetch(`${API_URL}/api/summary/monthly`);
-  if (!res.ok) throw new Error('Failed to fetch monthly summary');
-  const data: SummaryData = await res.json();
-  return data;
+  const res = await apiClient.get<SummaryData>('/api/summary/monthly');
+  return res.data;
 }
 
 export async function getYearlySummary(): Promise<SummaryData> {
-  const res = await fetch(`${API_URL}/api/summary/yearly`);
-  if (!res.ok) throw new Error('Failed to fetch yearly summary');
-  const data: SummaryData = await res.json();
-  return data;
+  const res = await apiClient.get<SummaryData>('/api/summary/yearly');
+  return res.data;
 }
 
 // No default export — this is a helper module.

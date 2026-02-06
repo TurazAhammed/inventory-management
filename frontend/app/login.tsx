@@ -36,11 +36,11 @@ export default function LoginScreen() {
       } else if (newRole === 'sales_admin') {
         router.replace('/(sales-tabs)/sales');
       } else if (newRole === 'super_admin') {
-        router.replace('/(tabs)/');
+        //router.replace('/(tabs)/');
         router.replace('/(tabs)/inventory');
-        router.replace('/(admin-tabs)/sales');
+        router.replace('/(tabs)/sales');
       } else {
-        router.replace('/(admin-tabs)/');
+        //router.replace('/(admin-tabs)/');
       }
     } catch (error: any) {
       Alert.alert(t('common.error') || 'Error', error.message || t('auth.loginFailed') || 'Login failed');

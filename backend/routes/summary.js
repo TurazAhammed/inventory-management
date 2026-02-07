@@ -7,7 +7,7 @@ router.get('/daily', async (req, res) => {
 	try {
 		// Daily inventory additions (include total buy price for added stock)
 		const [inventoryDaily] = await pool.query(
-			`SELECT COUNT(*) as count, COALESCE(SUM(quantity), 0) as total_qty, COALESCE(SUM(buy_price * quantity), 0) as total_buy_price
+			`SELECT COUNT(*) as count, COALESCE(SUM(quantity), 0) as total_qty, COALESCE(SUM((COALESCE(buy_price,0) + COALESCE(transport_cost,0) + COALESCE(labor_cost,0)) * quantity), 0) as total_buy_price
 			 FROM inventory 
 			 WHERE DATE(created_at) = CURDATE()`
 		);
@@ -17,7 +17,7 @@ router.get('/daily', async (req, res) => {
 			`SELECT COUNT(*) as count,
 							COALESCE(SUM(s.quantity_sold), 0) as total_qty,
 							COALESCE(SUM(s.total_sell), 0) as total_revenue,
-							COALESCE(SUM(s.quantity_sold * i.buy_price), 0) as total_buy_cost
+							COALESCE(SUM(s.quantity_sold * (COALESCE(i.buy_price,0) + COALESCE(i.transport_cost,0)) + COALESCE(s.labor_cost,0)), 0) as total_buy_cost
 			 FROM sales s
 			 LEFT JOIN inventory i ON s.item_id = i.id
 			 WHERE DATE(s.sold_at) = CURDATE()`
@@ -55,7 +55,7 @@ router.get('/weekly', async (req, res) => {
 	try {
 		// Weekly inventory additions (include total buy price)
 		const [inventoryWeekly] = await pool.query(
-			`SELECT COUNT(*) as count, COALESCE(SUM(quantity), 0) as total_qty, COALESCE(SUM(buy_price * quantity), 0) as total_buy_price
+			`SELECT COUNT(*) as count, COALESCE(SUM(quantity), 0) as total_qty, COALESCE(SUM((COALESCE(buy_price,0) + COALESCE(transport_cost,0) + COALESCE(labor_cost,0)) * quantity), 0) as total_buy_price
 			 FROM inventory 
 			 WHERE YEARWEEK(created_at) = YEARWEEK(CURDATE())`
 		);
@@ -65,7 +65,7 @@ router.get('/weekly', async (req, res) => {
 			`SELECT COUNT(*) as count,
 							COALESCE(SUM(s.quantity_sold), 0) as total_qty,
 							COALESCE(SUM(s.total_sell), 0) as total_revenue,
-							COALESCE(SUM(s.quantity_sold * i.buy_price), 0) as total_buy_cost
+							COALESCE(SUM(s.quantity_sold * (COALESCE(i.buy_price,0) + COALESCE(i.transport_cost,0)) + COALESCE(s.labor_cost,0)), 0) as total_buy_cost
 			 FROM sales s
 			 LEFT JOIN inventory i ON s.item_id = i.id
 			 WHERE YEARWEEK(s.sold_at) = YEARWEEK(CURDATE())`
@@ -102,7 +102,7 @@ router.get('/weekly', async (req, res) => {
 router.get('/monthly', async (req, res) => {
 	try {
 		const [inventoryMonthly] = await pool.query(
-			`SELECT COUNT(*) as count, COALESCE(SUM(quantity), 0) as total_qty, COALESCE(SUM(buy_price * quantity), 0) as total_buy_price
+			`SELECT COUNT(*) as count, COALESCE(SUM(quantity), 0) as total_qty, COALESCE(SUM((COALESCE(buy_price,0) + COALESCE(transport_cost,0) + COALESCE(labor_cost,0)) * quantity), 0) as total_buy_price
 			 FROM inventory
 			 WHERE YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE())`
 		);
@@ -111,7 +111,7 @@ router.get('/monthly', async (req, res) => {
 			`SELECT COUNT(*) as count,
 							COALESCE(SUM(s.quantity_sold), 0) as total_qty,
 							COALESCE(SUM(s.total_sell), 0) as total_revenue,
-							COALESCE(SUM(s.quantity_sold * i.buy_price), 0) as total_buy_cost
+							COALESCE(SUM(s.quantity_sold * (COALESCE(i.buy_price,0) + COALESCE(i.transport_cost,0)) + COALESCE(s.labor_cost,0)), 0) as total_buy_cost
 			 FROM sales s
 			 LEFT JOIN inventory i ON s.item_id = i.id
 			 WHERE YEAR(s.sold_at) = YEAR(CURDATE()) AND MONTH(s.sold_at) = MONTH(CURDATE())`
@@ -148,7 +148,7 @@ router.get('/monthly', async (req, res) => {
 router.get('/yearly', async (req, res) => {
 	try {
 		const [inventoryYearly] = await pool.query(
-			`SELECT COUNT(*) as count, COALESCE(SUM(quantity), 0) as total_qty, COALESCE(SUM(buy_price * quantity), 0) as total_buy_price
+			`SELECT COUNT(*) as count, COALESCE(SUM(quantity), 0) as total_qty, COALESCE(SUM((COALESCE(buy_price,0) + COALESCE(transport_cost,0) + COALESCE(labor_cost,0)) * quantity), 0) as total_buy_price
 			 FROM inventory
 			 WHERE YEAR(created_at) = YEAR(CURDATE())`
 		);
@@ -157,7 +157,7 @@ router.get('/yearly', async (req, res) => {
 			`SELECT COUNT(*) as count,
 							COALESCE(SUM(s.quantity_sold), 0) as total_qty,
 							COALESCE(SUM(s.total_sell), 0) as total_revenue,
-							COALESCE(SUM(s.quantity_sold * i.buy_price), 0) as total_buy_cost
+							COALESCE(SUM(s.quantity_sold * (COALESCE(i.buy_price,0) + COALESCE(i.transport_cost,0)) + COALESCE(s.labor_cost,0)), 0) as total_buy_cost
 			 FROM sales s
 			 LEFT JOIN inventory i ON s.item_id = i.id
 			 WHERE YEAR(s.sold_at) = YEAR(CURDATE())`

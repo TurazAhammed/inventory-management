@@ -19,6 +19,7 @@ router.get('/', auth, role(["sales_admin", "super_admin"]), async (req, res) => 
 				s.quantity_sold,
 				s.sell_price,
 				s.total_sell,
+				s.labor_cost,
 				s.sold_at
 			FROM sales s
 			JOIN inventory i ON s.item_id = i.id
@@ -34,10 +35,10 @@ router.get('/', auth, role(["sales_admin", "super_admin"]), async (req, res) => 
 
 // Create a single-item sale: { item_id, quantity_sold, sell_price }
 router.post('/', auth, role(["sales_admin", "super_admin"]), async (req, res) => {
-	const { item_id, quantity_sold, sell_price } = req.body;
+	const { item_id, quantity_sold, sell_price, labor_cost } = req.body;
 	if (!item_id || !quantity_sold || !sell_price) return res.status(400).json({ error: 'Missing fields' });
 
-	const total_sell = Number(quantity_sold) * Number(sell_price);
+	const total_sell = parseInt(quantity_sold) * parseFloat(sell_price);
 	const conn = await pool.getConnection();
 	try {
 		await conn.beginTransaction();
@@ -50,12 +51,12 @@ router.post('/', auth, role(["sales_admin", "super_admin"]), async (req, res) =>
 		if (updateRes.affectedRows === 0) throw new Error('Insufficient stock or item not found');
 
 		const [result] = await conn.query(
-			'INSERT INTO sales (item_id, quantity_sold, sell_price, total_sell, sold_at) VALUES (?, ?, ?, ?, NOW())',
-			[item_id, quantity_sold, sell_price, total_sell]
+			'INSERT INTO sales (item_id, quantity_sold, sell_price, total_sell, labor_cost, sold_at) VALUES (?, ?, ?, ?, ?, NOW())',
+			[item_id, quantity_sold, sell_price, total_sell, labor_cost]
 		);
 
 		await conn.commit();
-		res.status(201).json({ id: result.insertId, item_id, quantity_sold, sell_price, total_sell });
+		res.status(201).json({ id: result.insertId, item_id, quantity_sold, sell_price, labor_cost, total_sell });
 	} catch (err) {
 		await conn.rollback();
 		console.error(err);
@@ -68,14 +69,14 @@ router.post('/', auth, role(["sales_admin", "super_admin"]), async (req, res) =>
 // Update a sale: adjust inventory accordingly if quantity/item changes
 router.put('/:id', auth, role(["sales_admin", "super_admin"]), async (req, res) => {
 	const { id } = req.params;
-	const { item_id: new_item_id, quantity_sold: new_qty, sell_price: new_price } = req.body;
+	const { item_id: new_item_id, quantity_sold: new_qty, sell_price: new_price, labor_cost: new_labor_cost } = req.body;
 
 	const conn = await pool.getConnection();
 	try {
 		await conn.beginTransaction();
 
 		// fetch existing sale
-		const [rows] = await conn.query('SELECT id, item_id, quantity_sold, sell_price FROM sales WHERE id = ?', [id]);
+		const [rows] = await conn.query('SELECT id, item_id, quantity_sold, sell_price, labor_cost FROM sales WHERE id = ?', [id]);
 		if (!rows || rows.length === 0) {
 			await conn.rollback();
 			return res.status(404).json({ error: 'Sale not found' });
@@ -87,7 +88,7 @@ router.put('/:id', auth, role(["sales_admin", "super_admin"]), async (req, res) 
 		const target_item = new_item_id != null ? Number(new_item_id) : old_item_id;
 		const target_qty = new_qty != null ? Number(new_qty) : old_qty;
 		const target_price = new_price != null ? Number(new_price) : Number(existing.sell_price || 0);
-
+		const target_labor_cost = new_labor_cost != null ? Number(new_labor_cost) : Number(existing.labor_cost || 0);
 		// If item changed, return old qty to old item and decrement new item
 		if (target_item !== old_item_id) {
 			// return old qty to old item
@@ -115,6 +116,7 @@ router.put('/:id', auth, role(["sales_admin", "super_admin"]), async (req, res) 
 		if (new_item_id != null) { fields.push('item_id = ?'); values.push(target_item); }
 		if (new_qty != null) { fields.push('quantity_sold = ?'); values.push(target_qty); }
 		if (new_price != null) { fields.push('sell_price = ?'); values.push(target_price); }
+		if (new_labor_cost != null) { fields.push('labor_cost = ?'); values.push(target_labor_cost); }
 		if (fields.length > 0) {
 			fields.push('total_sell = ?'); values.push(total_sell);
 			values.push(id);
@@ -122,7 +124,7 @@ router.put('/:id', auth, role(["sales_admin", "super_admin"]), async (req, res) 
 			await conn.query(sql, values);
 		}
 
-		const [updatedRows] = await conn.query('SELECT id, item_id, quantity_sold, sell_price, total_sell, sold_at FROM sales WHERE id = ?', [id]);
+		const [updatedRows] = await conn.query('SELECT id, item_id, quantity_sold, sell_price, total_sell, labor_cost, sold_at FROM sales WHERE id = ?', [id]);
 		await conn.commit();
 		res.json(updatedRows[0]);
 	} catch (err) {

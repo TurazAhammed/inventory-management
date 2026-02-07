@@ -36,8 +36,8 @@ export default function LoginScreen() {
       } else if (newRole === 'sales_admin') {
         router.replace('/(sales-tabs)/sales');
       } else if (newRole === 'super_admin') {
-        //router.replace('/(tabs)/');
-        router.replace('/(tabs)/inventory');
+        //router.replace('/(admin-tabs)/');
+        router.replace('/(admin-tabs)/inventory');
         router.replace('/(tabs)/sales');
       } else {
         //router.replace('/(admin-tabs)/');

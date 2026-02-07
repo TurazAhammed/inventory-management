@@ -20,7 +20,7 @@ const RootLayoutContent = () => {
       {!token ? (
         <Stack.Screen name="login" options={{ headerShown: false }} />
       ) : (
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(admin-tabs)" options={{ headerShown: false }} />
       )}
     </Stack>
   );
